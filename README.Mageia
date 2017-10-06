@@ -1,0 +1,175 @@
+Updated 13 Apr 2015
+
+This package contains GRUB 2 release version 2.00.
+
+Important Note:
+Rather than manually installing this package via the package manager it is strongly recommended that it be installed using
+the 'Boot' section of the Mageia Control Center, where it can be selected in place of the default (grub legacy) and set up
+automatically.
+On UEFI systems it is the default boot loader.
+
+An optional Mageia theme comprising a graphical background and a nice (Mageia) font is also available in the package
+grub2-mageia-theme which is installed by default.
+
+The default installation will generate a menu on installation comprising the distribution's kernel versions found in /boot
+and if os-prober is installed, any other operating systems detected will also be included.
+
+The grub2 package is for PC-BIOS machines - if you have UEFI based hardware, then grub2-efi is installed as the default
+bootloader in Mageia 5.
+There is a separate README.efi in that package, in addition to this README.Mageia file. 
+
+The GRUB 2 boot files are installed in /boot/grub2/* so that an existing Mageia GRUB legacy installation (in /boot/grub/)
+is unaffected.
+
+The GRUB 2 user commands (executables) are all named grub2-* in this installation to avoid conflicts with 
+similar tools used by GRUB legacy. The two can happily co-exist on the same machine.
+
+In this context remember that when referring to GRUB 2 documentation a reference to e.g. "grub-install"
+must be applied as "grub2-install" or the legacy version will be used.
+
+
+****************************************************** WARNING ************************************************
+The commands below if used carelessly may render your system un-bootable - before attempting any boot loader changes
+it is advisable to learn how to boot manually by using a GRUB/GRUB2 boot CD or floppy or even a USB stick. 
+(The latter is not recommended as an inserted USB stick is seen as a hard drive and can affect drive
+assignment numbering.)
+***************************************************************************************************************
+
+############################################
+A few quick-start notes for PC-BIOS systems:-
+############################################
+To boot a grub2 system from legacy grub, you can add a menu item 
+to your /boot/grub/menu.lst
+
+title Mageia via GRUB 2
+root (hdx,y)
+kernel /boot/grub2/i386-pc/core.img
+
+x and y are the drive and root partition counting from 0.
+See the note below about generating /boot/grub2/i386-pc/core.img
+Selecting this entry will transfer control from GRUB to GRUB 2 
+
+##################################
+To (re-)generate /boot/grub2/i386-pc/core.img
+
+# grub2-install --grub-setup=/bin/true /dev/sdXY
+
+NOTE: this will also re-install the grub2 files under /boot/grub2/
+
+##################################
+To install GRUB 2 to the MBR :-
+
+# grub2-install --root-directory=/ /dev/sdX
+
+This will install grub2 to /boot/grub2/* but it will not create/update the menu.
+
+NOTE A menu is automatically generated during installation of the grub2 package, so this will be used.
+
+##################################
+To install GRUB 2 to the MBR and create a new menu you can use:-
+
+# grub2-install /dev/sdX
+
+##################################
+To re-build the GRUB 2 menu (Applies also to UEFI mode)
+
+(for example after editing /etc/grub.d/40_custom or /etc/default/grub):-
+
+$ update-grub
+
+OR
+
+$ update-grub2
+
+Either of which may be run as root or regular user. Regular users. will be asked for root password.
+
+Alternatively as root use:
+
+# grub2-mkconfig -o /boot/grub2/grub.cfg
+
+
+##################################
+Configuration (Applies also to UEFI mode)
+
+Most GRUB 2 configuration is done in /etc/default/grub
+
+For example, to inhibit an installed os-prober (to restrict the menu entries to only show Mageia)
+you can change the following line to "true":-
+
+GRUB_DISABLE_OS_PROBER=false
+
+If you need custom options in the kernel command line they may be added here:-
+
+GRUB_CMDLINE_LINUX_DEFAULT="splash 3"
+
+The above example has the default "splash" with the "3" added to change the boot run level
+to 3 (non-graphical).
+
+After any manual changes to /etc/default/grub you must re-build grub.cfg as mentioned
+above in "To re-build the GRUB 2 menu"
+
+##################################
+Adding additional operating systems to the menu. (Applies also to UEFI mode)
+
+Most will be detected by os-prober if it is installed, but may also be added manually in /etc/grub.d/40_custom,
+or in /boot/grub2/custom.cfg
+
+Do not edit the Mageia grub.cfg directly, as changes there will be overwritten.
+Items in /etc/grub.d/40_custom will be added when the menu is re-built as mentioned above
+in "To re-build the GRUB 2 menu". Items in /boot/grub2/custom.cfg are added automatically to the menu
+without re-building it.
+
+NOTE
+It is quite possible to manually create a grub.cfg and maintain it.
+This situation generally arises when using a dedicated GRUB 2 boot partition to boot into many different
+distributions.
+The grub.cfg in this case is not owned (or updated) by any operating system - only you.
+
+##################################
+Minimal installations.
+
+It is possible to install grub2 without a theme and/or without os-prober by
+installing using:
+
+# urpmi grub2 --no-recommends
+
+This will install only grub2 which will have a plain text menu and reduce the installed size.
+It will include only your Mageia system in the menu (showing all kernels available).
+
+The theme may be installed later by selecting the package grub2-mageia-theme in MCC or by using:-
+
+# urpmi grub2-mageia-theme
+
+Either way follow this with:
+
+# update-grub
+
+It will be displayed on the next boot.
+
+#########################################
+A few notes for UEFI systems:-
+#########################################
+
+##################################
+To (re-)install grub2 to /boot/grub2 and re-generate core.efi
+
+# grub2-install
+
+This will also make Mageia the first entry in the EFI boot order with the entry dir named 'mageia'
+
+If you want a different EFI boot order dir name then you can use:
+
+# grub2-install --bootloader-id=<dir_name>
+
+This will then be the default (possible use case here is to make a dedicated master-grub partition
+the controlling bootloader to chainload into many systems)
+
+Note that this does not update the menu. To update the menu:
+
+# update-grub
+
+or to create a menu (grub.cfg) elsewhere use:
+
+# grub2-mkconfig -o <path_to_use>/grub.cfg
+
+Enjoy.

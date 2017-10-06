@@ -1,0 +1,15 @@
+diff -ur grub-2.02~beta3_o/grub-core/disk/diskfilter.c grub-2.02~beta3_n/grub-core/disk/diskfilter.c
+--- grub-2.02~beta3_o/grub-core/disk/diskfilter.c	2015-09-02 21:10:53.000000000 +0100
++++ grub-2.02~beta3_n/grub-core/disk/diskfilter.c	2016-07-10 23:38:23.744531259 +0100
+@@ -911,8 +911,9 @@
+ 		 grub_size_t size __attribute ((unused)),
+ 		 const char *buf __attribute ((unused)))
+ {
+-  return grub_error (GRUB_ERR_NOT_IMPLEMENTED_YET,
+-		     "diskfilter writes are not supported");
++/*  return grub_error (GRUB_ERR_NOT_IMPLEMENTED_YET,
++		     "diskfilter writes are not supported");*/
++    return GRUB_ERR_NONE;
+ }
+ 
+ struct grub_diskfilter_vg *

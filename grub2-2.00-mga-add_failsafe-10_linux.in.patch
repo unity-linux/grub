@@ -1,0 +1,16 @@
+From 2053c4610482deff681feb96f2637933c44f8f3f Mon Sep 17 00:00:00 2001
+From: unknown@mageia.org
+Date: Thu, 25 Jun 2015 15:11:36 -0400
+Subject: [PATCH 1/1] add failsafe 10_linux.in
+diff -ur grub-2.02~beta2_o/util/grub.d/10_linux.in grub-2.02~beta2/util/grub.d/10_linux.in
+--- grub-2.02~beta2_o/util/grub.d/10_linux.in	2015-09-05 16:20:31.898236734 +0100
++++ grub-2.02~beta2/util/grub.d/10_linux.in	2015-09-05 16:22:13.454567419 +0100
+@@ -240,7 +240,7 @@
+               "${GRUB_CMDLINE_LINUX} ${GRUB_CMDLINE_LINUX_DEFAULT}"
+   if [ "x${GRUB_DISABLE_RECOVERY}" != "xtrue" ]; then
+     linux_entry "${OS}" "${version}" recovery \
+-                "single ${GRUB_CMDLINE_LINUX}"
++                "failsafe ${GRUB_CMDLINE_LINUX}"
+   fi
+ 
+   list=`echo $list | tr ' ' '\n' | fgrep -vx "$linux" | tr '\n' ' '`

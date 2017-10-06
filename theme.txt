@@ -1,0 +1,50 @@
+# GRUB gfxmenu theme "maggy".
+
+title-text: "Mageia Boot Menu"
+title-font: "MageiaLogo Bold 28"
+title-color: "white"
+
+desktop-image: "grub2-mageia-default.png"
+terminal-font: "Unknown Regular 16"
+
++ boot_menu {
+   left = 5%
+   top = 15%
+   width = 75%
+   height = 55%
+  item_font = "MageiaLogo Regular 20"
+   selected_item_font = "MageiaLogo Bold 20"
+   color_normal="black/black"
+    item_color = "#0e1a27"
+   selected_item_color = "white"
+   item_height = 24
+   item_spacing = 10
+}
+
++ progress_bar
+{
+   id = "__timeout__"
+   left = 20%
+   top = 70%
+   width = 60%
+   height = 2%
+   fg_color = "lightskyblue"
+   bg_color = "dodgerblue"
+   border_color = "midnightblue"
+}
+
+# Informational message bar.
++ vbox {
+   left = 10%
+   top = 84%-35
+   width = 50%
+   height = 35
+   + label { 
+      text="Select an item with the arrow keys and press Enter to boot."
+      font="MageiaLogo Bold 16" color="white"
+   }
+   + label { 
+      text="Press 'c' for command line, 'e' to edit."
+      font="MageiaLogo Bold 16" color="white"
+   }
+}

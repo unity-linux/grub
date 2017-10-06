@@ -1,0 +1,428 @@
+diff --git a/Makefile.util.def b/Makefile.util.def
+index ed9b4c6..f9caccb 100644
+--- a/Makefile.util.def
++++ b/Makefile.util.def
+@@ -416,7 +416,7 @@ program = {
+   ldadd = libgrubgcry.a;
+   ldadd = libgrubkern.a;
+   ldadd = grub-core/gnulib/libgnu.a;
+-  ldadd = '$(LIBINTL) $(LIBDEVMAPPER) $(LIBZFS) $(LIBNVPAIR) $(LIBGEOM)';
++  ldadd = '$(LIBINTL) $(LIBDEVMAPPER) $(LIBUTIL) $(LIBZFS) $(LIBNVPAIR) $(LIBGEOM)';
+ };
+ 
+ data = {
+diff --git a/NEWS b/NEWS
+index c9a9752..572eadb 100644
+--- a/NEWS
++++ b/NEWS
+@@ -18,6 +18,7 @@ New in 2.02:
+   * ZFS features support.
+   * ZFS LZ4 support.
+   * XFS V5 format support.
++  * LVM RAID1 support.
+ 
+ * New/improved terminal and video support:
+   * Monochrome text (matching `hercules' in GRUB Legacy).
+@@ -49,6 +50,7 @@ New in 2.02:
+   * Improve TFTP robustness.
+   * Parse `nd' disk names in GRUB Legacy configuration files.
+   * Issue separate DNS queries for IPv4 and IPv6.
++  * Support IPv6 Router Advertisement to configure default router.
+ 
+ * Coreboot improvements:
+   * CBFS support both in on-disk images (loopback) and flash.
+@@ -96,6 +98,8 @@ New in 2.02:
+     EFI Stall. If everything fails, use hardcoded frequency 800MHz.
+   * Support Hyper-V Gen2 platforms which lack PIT for TSC calibration.
+   * Map UEFI Persistent Memory to E820 persistent memory.
++  * New Xen loader on ARM64.
++  * Respect alignment requirement for block device IO buffers on EFI.
+ 
+ * Security:
+   * Add optional facility to enforce that all files read by the core image
+@@ -134,6 +138,11 @@ New in 2.02:
+     menu entry immediately.
+   * New `file' command and grub-file utility to check file types.
+   * New syslinux configuration file parser.
++  * Set menu entry class to primary OS name returned by os-prober to display
++    OS specific icon.
++  * On Linux x86 detect EFI word size in grub-install and automatically select
++    correct platform (x86_64-efi or i386-efi) to install. Requires Linux kernel
++    4.0 or higher.
+ 
+ * Build system:
+   * Remove all uses of nested functions; GRUB no longer requires an
+@@ -160,6 +169,8 @@ New in 2.02:
+   * emu libusb support removed (was broken and unmaintained).
+   * powerpc64le compile support.
+   * Use fixed timestamp when generating GRUB image for reproducible builds.
++  * Verify at build time that modules contain only supported relocations and their
++    structure matches what boot-time module loader expects.
+ 
+ * Revision control moved to git.
+ 
+diff --git a/configure.ac b/configure.ac
+index a85b134..9ddfc53 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -388,7 +388,8 @@ fi
+ 
+ # Check for functions and headers.
+ AC_CHECK_FUNCS(posix_memalign memalign getextmntent)
+-AC_CHECK_HEADERS(sys/param.h sys/mount.h sys/mnttab.h sys/mkdev.h limits.h)
++AC_CHECK_HEADERS(sys/param.h sys/mount.h sys/mnttab.h limits.h)
++AC_HEADER_MAJOR
+ 
+ AC_CHECK_MEMBERS([struct statfs.f_fstypename],,,[$ac_includes_default
+ #include <sys/param.h>
+@@ -1185,9 +1186,9 @@ CFLAGS="$TARGET_CFLAGS"
+ # Position independent executable.
+ grub_CHECK_PIE
+ [# Need that, because some distributions ship compilers that include
+-# `-fPIE' in the default specs.
++# `-fPIE' or '-fpie' in the default specs.
+ if [ x"$pie_possible" = xyes ]; then
+-  TARGET_CFLAGS="$TARGET_CFLAGS -fno-PIE"
++  TARGET_CFLAGS="$TARGET_CFLAGS -fno-PIE -fno-pie"
+ fi]
+ 
+ CFLAGS="$TARGET_CFLAGS"
+diff --git a/grub-core/fs/iso9660.c b/grub-core/fs/iso9660.c
+index 67a67cf..c9c8374 100644
+--- a/grub-core/fs/iso9660.c
++++ b/grub-core/fs/iso9660.c
+@@ -750,19 +750,15 @@ grub_iso9660_iterate_dir (grub_fshelp_node_t dir,
+ 
+         if (dir->data->joliet && !ctx.filename)
+           {
+-            char *oldname, *semicolon;
++            char *semicolon;
+ 
+-            oldname = name;
+             ctx.filename = grub_iso9660_convert_string
+-                  ((grub_uint8_t *) oldname, dirent.namelen >> 1);
++                  ((grub_uint8_t *) name, dirent.namelen >> 1);
+ 
+ 	    semicolon = grub_strrchr (ctx.filename, ';');
+ 	    if (semicolon)
+ 	      *semicolon = '\0';
+ 
+-            if (ctx.filename_alloc)
+-              grub_free (oldname);
+-
+             ctx.filename_alloc = 1;
+           }
+ 
+diff --git a/grub-core/fs/xfs.c b/grub-core/fs/xfs.c
+index ca9c0c3..9f66dd6 100644
+--- a/grub-core/fs/xfs.c
++++ b/grub-core/fs/xfs.c
+@@ -76,8 +76,13 @@ GRUB_MOD_LICENSE ("GPLv3+");
+ 
+ /* incompat feature flags */
+ #define XFS_SB_FEAT_INCOMPAT_FTYPE      (1 << 0)        /* filetype in dirent */
++#define XFS_SB_FEAT_INCOMPAT_SPINODES   (1 << 1)        /* sparse inode chunks */
++#define XFS_SB_FEAT_INCOMPAT_META_UUID  (1 << 2)        /* metadata UUID */
++
++/* We do not currently verify metadata UUID so it is safe to read such filesystem */
+ #define XFS_SB_FEAT_INCOMPAT_SUPPORTED \
+-	(XFS_SB_FEAT_INCOMPAT_FTYPE)
++	(XFS_SB_FEAT_INCOMPAT_FTYPE | \
++	 XFS_SB_FEAT_INCOMPAT_META_UUID)
+ 
+ struct grub_xfs_sblock
+ {
+diff --git a/grub-core/kern/emu/misc.c b/grub-core/kern/emu/misc.c
+index d361feb..7666133 100644
+--- a/grub-core/kern/emu/misc.c
++++ b/grub-core/kern/emu/misc.c
+@@ -127,6 +127,7 @@ xasprintf (const char *fmt, ...)
+   
+   va_start (ap, fmt);
+   result = grub_xvasprintf (fmt, ap);
++  va_end (ap);
+   if (!result)
+     grub_util_error ("%s", _("out of memory"));
+   
+diff --git a/grub-core/loader/i386/xen_file.c b/grub-core/loader/i386/xen_file.c
+index 5836218..37f9ad8 100644
+--- a/grub-core/loader/i386/xen_file.c
++++ b/grub-core/loader/i386/xen_file.c
+@@ -55,11 +55,11 @@ grub_xen_file (grub_file_t file)
+   grub_dprintf ("xen", "found bzimage payload 0x%llx-0x%llx\n",
+ 		(unsigned long long) (lh.setup_sects + 1) * 512
+ 		+ lh.payload_offset,
+-		(unsigned long long) lh.payload_length - 4);
++		(unsigned long long) lh.payload_length);
+ 
+   off_file = grub_file_offset_open (file, (lh.setup_sects + 1) * 512
+ 				    + lh.payload_offset,
+-				    lh.payload_length - 4);
++				    lh.payload_length);
+   if (!off_file)
+     goto fail;
+ 
+diff --git a/grub-core/net/bootp.c b/grub-core/net/bootp.c
+index a088244..189551a 100644
+--- a/grub-core/net/bootp.c
++++ b/grub-core/net/bootp.c
+@@ -157,6 +157,9 @@ grub_net_configure_by_dhcp_ack (const char *name,
+   hwaddr.type = GRUB_NET_LINK_LEVEL_PROTOCOL_ETHERNET;
+ 
+   inter = grub_net_add_addr (name, card, &addr, &hwaddr, flags);
++  if (!inter)
++    return 0;
++
+ #if 0
+   /* This is likely based on misunderstanding. gateway_ip refers to
+      address of BOOTP relay and should not be used after BOOTP transaction
+@@ -368,6 +371,7 @@ grub_cmd_dhcpopt (struct grub_command *cmd __attribute__ ((unused)),
+ 
+   if (grub_strcmp (args[3], "string") == 0)
+     {
++      grub_err_t err = GRUB_ERR_NONE;
+       char *val = grub_malloc (taglength + 1);
+       if (!val)
+ 	return grub_errno;
+@@ -376,8 +380,9 @@ grub_cmd_dhcpopt (struct grub_command *cmd __attribute__ ((unused)),
+       if (args[0][0] == '-' && args[0][1] == 0)
+ 	grub_printf ("%s\n", val);
+       else
+-	return grub_env_set (args[0], val);
+-      return GRUB_ERR_NONE;
++	err = grub_env_set (args[0], val);
++      grub_free (val);
++      return err;
+     }
+ 
+   if (grub_strcmp (args[3], "number") == 0)
+@@ -399,6 +404,7 @@ grub_cmd_dhcpopt (struct grub_command *cmd __attribute__ ((unused)),
+ 
+   if (grub_strcmp (args[3], "hex") == 0)
+     {
++      grub_err_t err = GRUB_ERR_NONE;
+       char *val = grub_malloc (2 * taglength + 1);
+       int i;
+       if (!val)
+@@ -412,8 +418,9 @@ grub_cmd_dhcpopt (struct grub_command *cmd __attribute__ ((unused)),
+       if (args[0][0] == '-' && args[0][1] == 0)
+ 	grub_printf ("%s\n", val);
+       else
+-	return grub_env_set (args[0], val);
+-      return GRUB_ERR_NONE;
++	err = grub_env_set (args[0], val);
++      grub_free (val);
++      return err;
+     }
+ 
+   return grub_error (GRUB_ERR_BAD_ARGUMENT,
+diff --git a/grub-core/net/dns.c b/grub-core/net/dns.c
+index 89741dd..5d9afe0 100644
+--- a/grub-core/net/dns.c
++++ b/grub-core/net/dns.c
+@@ -238,6 +238,15 @@ recv_hook (grub_net_udp_socket_t sock __attribute__ ((unused)),
+   char *redirect_save = NULL;
+   grub_uint32_t ttl_all = ~0U;
+ 
++  /* Code apparently assumed that only one packet is received as response.
++     We may get multiple responses due to network condition, so check here
++     and quit early. */
++  if (*data->addresses)
++    {
++      grub_netbuff_free (nb);
++      return GRUB_ERR_NONE;
++    }
++
+   head = (struct dns_header *) nb->data;
+   ptr = (grub_uint8_t *) (head + 1);
+   if (ptr >= nb->tail)
+diff --git a/grub-core/net/http.c b/grub-core/net/http.c
+index 4684f8b..5aa4ad3 100644
+--- a/grub-core/net/http.c
++++ b/grub-core/net/http.c
+@@ -381,9 +381,8 @@ http_establish (struct grub_file *file, grub_off_t offset, int initial)
+       ptr = nb->tail;
+       grub_snprintf ((char *) ptr,
+ 		     sizeof ("Range: bytes=XXXXXXXXXXXXXXXXXXXX-"
+-			     "\r\n"
+ 			     "\r\n"),
+-		     "Range: bytes=%" PRIuGRUB_UINT64_T "-\r\n\r\n",
++		     "Range: bytes=%" PRIuGRUB_UINT64_T "-\r\n",
+ 		     offset);
+       grub_netbuff_put (nb, grub_strlen ((char *) ptr));
+     }
+@@ -450,6 +449,7 @@ http_seek (struct grub_file *file, grub_off_t off)
+     }
+ 
+   file->device->net->stall = 0;
++  file->device->net->eof = 0;
+   file->device->net->offset = off;
+ 
+   data = grub_zalloc (sizeof (*data));
+diff --git a/grub-core/net/net.c b/grub-core/net/net.c
+index 9424595..10773fc 100644
+--- a/grub-core/net/net.c
++++ b/grub-core/net/net.c
+@@ -1346,6 +1346,15 @@ grub_net_open_real (const char *name)
+ 		continue;
+ 	    }
+ 
++	  if (grub_strncmp (prefdev, "pxe", sizeof ("pxe") - 1) == 0 &&
++	      (!prefdev[sizeof ("pxe") - 1] || (prefdev[sizeof("pxe") - 1] == ':')))
++	    {
++	      grub_free (prefdev);
++	      prefdev = grub_strdup ("tftp");
++	      if (!prefdev)
++		continue;
++	    }
++
+ 	  comma = grub_strchr (prefdev, ',');
+ 	  if (comma)
+ 	    *comma = '\0';
+@@ -1672,6 +1681,7 @@ grub_net_seek_real (struct grub_file *file, grub_off_t offset)
+     file->device->net->packs.last = NULL;
+     file->device->net->offset = 0;
+     file->device->net->eof = 0;
++    file->device->net->stall = 0;
+     err = file->device->net->protocol->open (file, file->device->net->name);
+     if (err)
+       return err;
+diff --git a/grub-core/osdep/devmapper/getroot.c b/grub-core/osdep/devmapper/getroot.c
+index 05eda50..72e5582 100644
+--- a/grub-core/osdep/devmapper/getroot.c
++++ b/grub-core/osdep/devmapper/getroot.c
+@@ -40,6 +40,12 @@
+ #include <limits.h>
+ #endif
+ 
++#if defined(MAJOR_IN_MKDEV)
++#include <sys/mkdev.h>
++#elif defined(MAJOR_IN_SYSMACROS)
++#include <sys/sysmacros.h>
++#endif
++
+ #include <libdevmapper.h>
+ 
+ #include <grub/types.h>
+diff --git a/grub-core/osdep/devmapper/hostdisk.c b/grub-core/osdep/devmapper/hostdisk.c
+index 19c1101..a697bcb 100644
+--- a/grub-core/osdep/devmapper/hostdisk.c
++++ b/grub-core/osdep/devmapper/hostdisk.c
+@@ -24,6 +24,11 @@
+ #include <errno.h>
+ #include <limits.h>
+ 
++#if defined(MAJOR_IN_MKDEV)
++#include <sys/mkdev.h>
++#elif defined(MAJOR_IN_SYSMACROS)
++#include <sys/sysmacros.h>
++#endif
+ 
+ #ifdef HAVE_DEVICE_MAPPER
+ # include <libdevmapper.h>
+diff --git a/grub-core/osdep/linux/getroot.c b/grub-core/osdep/linux/getroot.c
+index 10480b6..09e7e6e 100644
+--- a/grub-core/osdep/linux/getroot.c
++++ b/grub-core/osdep/linux/getroot.c
+@@ -35,6 +35,12 @@
+ #include <limits.h>
+ #endif
+ 
++#if defined(MAJOR_IN_MKDEV)
++#include <sys/mkdev.h>
++#elif defined(MAJOR_IN_SYSMACROS)
++#include <sys/sysmacros.h>
++#endif
++
+ #include <grub/types.h>
+ #include <sys/ioctl.h>         /* ioctl */
+ #include <sys/mount.h>
+diff --git a/grub-core/osdep/unix/getroot.c b/grub-core/osdep/unix/getroot.c
+index 1079a91..4bf37b0 100644
+--- a/grub-core/osdep/unix/getroot.c
++++ b/grub-core/osdep/unix/getroot.c
+@@ -51,8 +51,10 @@
+ #endif
+ 
+ #include <sys/types.h>
+-#if defined(HAVE_SYS_MKDEV_H)
++#if defined(MAJOR_IN_MKDEV)
+ #include <sys/mkdev.h>
++#elif defined(MAJOR_IN_SYSMACROS)
++#include <sys/sysmacros.h>
+ #endif
+ 
+ #if defined(HAVE_LIBZFS) && defined(HAVE_LIBNVPAIR)
+diff --git a/grub-core/term/at_keyboard.c b/grub-core/term/at_keyboard.c
+index c234e92..b4ea9ff 100644
+--- a/grub-core/term/at_keyboard.c
++++ b/grub-core/term/at_keyboard.c
+@@ -88,7 +88,7 @@ static const grub_uint8_t set1_mapping[128] =
+     /* 0x4c */ GRUB_KEYBOARD_KEY_NUM5,        GRUB_KEYBOARD_KEY_NUM6, 
+     /* 0x4e */ GRUB_KEYBOARD_KEY_NUMPLUS,     GRUB_KEYBOARD_KEY_NUM1, 
+     /* 0x50 */ GRUB_KEYBOARD_KEY_NUM2,        GRUB_KEYBOARD_KEY_NUM3, 
+-    /* 0x52 */ GRUB_KEYBOARD_KEY_NUMDOT,      GRUB_KEYBOARD_KEY_NUMDOT, 
++    /* 0x52 */ GRUB_KEYBOARD_KEY_NUM0,        GRUB_KEYBOARD_KEY_NUMDOT, 
+     /* 0x54 */ 0,                             0, 
+     /* 0x56 */ GRUB_KEYBOARD_KEY_102ND,       GRUB_KEYBOARD_KEY_F11, 
+     /* 0x58 */ GRUB_KEYBOARD_KEY_F12,         0,
+@@ -193,7 +193,7 @@ static const grub_uint8_t set2_mapping[256] =
+     /* 0x6a */ GRUB_KEYBOARD_KEY_JP_YEN,      GRUB_KEYBOARD_KEY_NUM4,
+     /* 0x6c */ GRUB_KEYBOARD_KEY_NUM7,        GRUB_KEYBOARD_KEY_KPCOMMA,
+     /* 0x6e */ 0,                             0,
+-    /* 0x70 */ GRUB_KEYBOARD_KEY_NUMDOT,      GRUB_KEYBOARD_KEY_NUM0,
++    /* 0x70 */ GRUB_KEYBOARD_KEY_NUM0,        GRUB_KEYBOARD_KEY_NUMDOT,
+     /* 0x72 */ GRUB_KEYBOARD_KEY_NUM2,        GRUB_KEYBOARD_KEY_NUM5,
+     /* 0x74 */ GRUB_KEYBOARD_KEY_NUM6,        GRUB_KEYBOARD_KEY_NUM8,
+     /* 0x76 */ GRUB_KEYBOARD_KEY_ESCAPE,      GRUB_KEYBOARD_KEY_NUM_LOCK,
+diff --git a/include/multiboot2.h b/include/multiboot2.h
+index 9d48627..8b8c156 100644
+--- a/include/multiboot2.h
++++ b/include/multiboot2.h
+@@ -176,7 +176,7 @@ struct multiboot_mmap_entry
+ #define MULTIBOOT_MEMORY_BADRAM                 5
+   multiboot_uint32_t type;
+   multiboot_uint32_t zero;
+-} GRUB_PACKED;
++};
+ typedef struct multiboot_mmap_entry multiboot_memory_map_t;
+ 
+ struct multiboot_tag
+diff --git a/util/grub-mkconfig.in b/util/grub-mkconfig.in
+index 203b076..f8496d2 100644
+--- a/util/grub-mkconfig.in
++++ b/util/grub-mkconfig.in
+@@ -273,6 +273,7 @@ Ensure that there are no errors in /etc/default/grub
+ and /etc/grub.d/* files or please file a bug report with
+ %s file attached." "${grub_cfg}.new" >&2
+     echo >&2
++    exit 1
+   else
+     # none of the children aborted with error, install the new grub.cfg
+     mv -f ${grub_cfg}.new ${grub_cfg}
+diff --git a/util/grub.d/10_linux.in b/util/grub.d/10_linux.in
+index 5a78513..de9044c 100644
+--- a/util/grub.d/10_linux.in
++++ b/util/grub.d/10_linux.in
+@@ -47,7 +47,7 @@ esac
+ # and mounting btrfs requires user space scanning, so force UUID in this case.
+ if [ "x${GRUB_DEVICE_UUID}" = "x" ] || [ "x${GRUB_DISABLE_LINUX_UUID}" = "xtrue" ] \
+     || ! test -e "/dev/disk/by-uuid/${GRUB_DEVICE_UUID}" \
+-    || test -e "${GRUB_DEVICE}" && uses_abstraction "${GRUB_DEVICE}" lvm; then
++    || ( test -e "${GRUB_DEVICE}" && uses_abstraction "${GRUB_DEVICE}" lvm ); then
+   LINUX_ROOT_DEVICE=${GRUB_DEVICE}
+ else
+   LINUX_ROOT_DEVICE=UUID=${GRUB_DEVICE_UUID}
+diff --git a/util/grub.d/20_linux_xen.in b/util/grub.d/20_linux_xen.in
+index 46045db..c48af94 100644
+--- a/util/grub.d/20_linux_xen.in
++++ b/util/grub.d/20_linux_xen.in
+@@ -47,7 +47,7 @@ esac
+ # and mounting btrfs requires user space scanning, so force UUID in this case.
+ if [ "x${GRUB_DEVICE_UUID}" = "x" ] || [ "x${GRUB_DISABLE_LINUX_UUID}" = "xtrue" ] \
+     || ! test -e "/dev/disk/by-uuid/${GRUB_DEVICE_UUID}" \
+-    || test -e "${GRUB_DEVICE}" && uses_abstraction "${GRUB_DEVICE}" lvm; then
++    || ( test -e "${GRUB_DEVICE}" && uses_abstraction "${GRUB_DEVICE}" lvm ); then
+   LINUX_ROOT_DEVICE=${GRUB_DEVICE}
+ else
+   LINUX_ROOT_DEVICE=UUID=${GRUB_DEVICE_UUID}

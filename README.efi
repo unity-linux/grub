@@ -1,0 +1,43 @@
+ 
+Installing:
+  When installing Mageia 5 in UEFI mode, grub2 is the 
+  default bootloader and will be installed and set up automatically. 
+  If you have a dual mode 'BIOS', make sure you boot in UEFI mode and if
+  using a USB stick for the install media, prepare the stick using isodumper,
+  making sure to check the 'for UEFI' check box.
+  
+  If you already have other operating systems on the machne you will 
+  already have an EFI System Partition (ESP). This should be detected 
+  automatically and the moint point /boot/EFI will be suggested as it's
+  mount point at the partitioning stage.
+  
+  --------------------------------------
+
+  NOTES for MAC users: (these may be out of date but are left here as they may be useful)
+  
+  On Mac EFI systems there several options - see also
+  https://help.ubuntu.com/community/UEFIBooting#Make_the_firmware_launch_GRUB2_.28U.29EFI_as_default
+  After installing the grub2-efi rpm:
+
+    0. prepare the EFI directory:
+
+      boot_root=$(df /boot | awk '/^\// {print $6}')
+      efi_dir=$(readlink -f ${boot_root}/EFI)  # will be /boot/EFI or /EFI
+      mkdir $efi_dir
+
+    1. If you have rEFIt:
+
+      mv -T /boot/grub2 $efi_dir/grub2
+      ln -s $efi_dir/grub2 /boot/grub2
+
+    2. Otherwise if you are using the Apple bootloader:
+
+      mv -T /boot/grub2 $efi_dir/BOOT
+      ln -s $efi_dir/BOOT /boot/grub2
+
+      mv /boot/grub2/{grub.efi,BOOTIA32.EFI}   # if on i386
+      mv /boot/grub2/{grub.efi,BOOTX64.EFI}    # if on x86_64
+
+  For further configuration see the above UEFIBooting wiki page.
+
+

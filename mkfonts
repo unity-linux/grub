@@ -1,0 +1,21 @@
+#!/bin/bash
+deps=(wget tar grub2)
+for i in ${deps[@]}; do
+if ! rpm -qa | grep -q $i; then
+echo "Please install $i and try again"
+fi
+done
+wget http://unifoundry.com/unifont-5.1.20080820.pcf.gz
+gunzip unifont-5.1.20080820.pcf.gz
+tar -xf MageiaLogoFonts-bdf.tar.gz
+
+echo "Generated fonts:-"
+# Don't limit ranges
+grub2-mkfont -o unicode.pf2 --verbose unifont-5.1.20080820.pcf | grep "Font name:"
+grub2-mkfont --output=MageiaLogo-Bold-16.pf2 --size=16 --verbose MageiaLogoFonts/MageiaLogoBold-16.bdf | grep "Font name:"
+grub2-mkfont --output=MageiaLogo-Bold-20.pf2 --size=20 --verbose MageiaLogoFonts/MageiaLogoBold-20.bdf | grep "Font name:"
+grub2-mkfont --output=MageiaLogo-Bold-28.pf2 --size=28 --verbose MageiaLogoFonts/MageiaLogoBold-28.bdf | grep "Font name:"
+grub2-mkfont --output=MageiaLogo-Regular-20.pf2 --size=20 --verbose MageiaLogoFonts/MageiaLogoRegular-20.bdf | grep "Font name:"
+rm -f unifont-5.1.20080820.*
+rm -rf MageiaLogoFonts
+

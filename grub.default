@@ -1,0 +1,17 @@
+# NOTE - do not manually edit the GRUB_THEME= line below (if present) unless you wish to
+# add a theme of your own. It is automatically added and removed when the grub2-mageia-theme 
+# package is installed or removed.
+# Feel free to edit or add other lines if you know what you are doing ;)
+#
+# After any edits to this file you must run update-grub to apply the changes.
+#
+GRUB_DISTRIBUTOR=Mageia
+GRUB_TIMEOUT=10
+GRUB_CMDLINE_LINUX_DEFAULT="splash"
+GRUB_DISABLE_RECOVERY=false
+GRUB_DISABLE_SUBMENU=n
+GRUB_GFXMODE=1024x768x32
+GRUB_GFXPAYLOAD_LINUX=text
+GRUB_TERMINAL_OUTPUT=gfxterm
+GRUB_DISABLE_OS_PROBER=false
+GRUB_ENABLE_CRYPTODISK=y

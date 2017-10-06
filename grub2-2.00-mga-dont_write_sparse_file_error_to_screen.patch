@@ -1,0 +1,13 @@
+diff -ur grub-2.02~beta3_o/grub-core/commands/loadenv.c grub-2.02~beta3_n/grub-core/commands/loadenv.c
+--- grub-2.02~beta3_o/grub-core/commands/loadenv.c	2016-02-18 06:15:11.000000000 +0000
++++ grub-2.02~beta3_n/grub-core/commands/loadenv.c	2016-07-10 11:41:13.870680390 +0100
+@@ -285,7 +285,8 @@
+   if (total_length != grub_file_size (file))
+     {
+       /* Maybe sparse, unallocated sectors. No way in GRUB.  */
+-      return grub_error (GRUB_ERR_BAD_FILE_TYPE, "sparse file not allowed");
++      /*return grub_error (GRUB_ERR_BAD_FILE_TYPE, "sparse file not allowed")*/
++       return GRUB_ERR_NONE;
+     }
+ 
+   /* One more sanity check. Re-read all sectors by blocklists, and compare
