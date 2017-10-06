@@ -24,4 +24,4 @@ script:
 - find ~/ -name *.src.rpm
 after_success:
 - sudo -H pip install --upgrade pyOpenSSL ndg-httpsclient pyasn1 requests[security] jinja2 marshmallow copr-cli simplejson
-- if [ $MOCK_CONFIG -eq "mageia-6-x86_64" ]; then copr-cli --config /tmp/stuff/.copr build -r Mageia-6-x86_64 jmiahman/Unity-Linux $(find ~/ -name *.src.rpm | tr " " "\n"| grep -m1 '\.rpm'); fi
+- if [ $MOCK_CONFIG == "mageia-6-x86_64" ]; then copr-cli --config /tmp/stuff/.copr build -r Mageia-6-x86_64 jmiahman/Unity-Linux $(find ~/ -name *.src.rpm | tr " " "\n"| grep -m1 '\.rpm'); fi
