@@ -20,8 +20,8 @@ script:
 - docker run --privileged=true -d -v "$(pwd):/rpmbuild" -v "/dev:/dev" -e MOCK_CONFIG="${MOCK_CONFIG}" $DID tail -f /dev/null
 - export CID=$(docker ps -l | awk '{print $1}' | grep -v -m1 'CONTAINER')
 - echo $CID
-- docker exec $CID /bin/sh -c 'cd /rpmbuild && ./mkfonts && rpmbuilder'
+- docker exec $CID /bin/sh -c 'cd /rpmbuild && rpmbuilder'
 - find ~/ -name *.src.rpm
 after_success:
 - sudo -H pip install --upgrade pyOpenSSL ndg-httpsclient pyasn1 requests[security] jinja2 marshmallow copr-cli simplejson
-- if [ -f $(find ~/ -name *.src.rpm) ]; then copr-cli --config /tmp/stuff/.copr build -r Mageia-6-x86_64 jmiahman/Unity-Linux $(find ~/ -name *.src.rpm); fi
+- if [ $MOCK_CONFIG -eq "mageia-6-x86_64" ]; then copr-cli --config /tmp/stuff/.copr build -r Mageia-6-x86_64 jmiahman/Unity-Linux $(find ~/ -name *.src.rpm | tr " " "\n"| grep -m1 '\.rpm'); fi
