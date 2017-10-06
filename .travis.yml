@@ -4,7 +4,7 @@ services:
 - docker
 install: true
 before_install:
-- openssl aes-256-cbc -K $encrypted_eb6f370c36aa_key -iv $encrypted_eb6f370c36aa_iv -in .stuff.tar.gz.enc -out stuff.tar.gz -d
+- openssl aes-256-cbc -K $encrypted_945afa1e9154_key -iv $encrypted_945afa1e9154_iv -in .stuff.tar.gz.enc -out stuff.tar.gz -d
 - tar xzvf stuff.tar.gz -C /tmp/
 - eval "$(ssh-agent -s)"
 - chmod 600 /tmp/stuff/.deploy
