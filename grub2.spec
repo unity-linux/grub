@@ -20,7 +20,7 @@
 %global tarversion 2.02~beta3
 %global pc_arch i386-pc
 %define git	10463
-%define rel	10
+%define rel	11
 
 Name:		grub2
 Version:	2.02
@@ -103,7 +103,6 @@ BuildRequires:	rpm-devel
 BuildRequires:	ruby
 BuildRequires:	texinfo
 
-Conflicts:	%{name}-efi
 Provides:	bootloader
 Provides:	grub2bootloader = %{version}-%{release}
 Requires:	%{name}-common = %{version}-%{release}
@@ -121,7 +120,6 @@ for more information.
 Summary:	Boot-loader with support for EFI
 Group:		System/Boot and Init
 
-Conflicts:	%{name}
 Requires(post):	efibootmgr
 Provides:	bootloader
 Provides:	grub2bootloader = %{version}-%{release}
