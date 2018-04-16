@@ -34,8 +34,8 @@ Group:		System/Boot and Init
 License:	GPLv3+ and GPLv2
 # unicode font is GPLv2
 URL:		http://www.gnu.org/software/grub/
-Source0:	ftp://alpha.gnu.org/gnu/grub/grub-%{tarversion}.tar.xz
-#Source0:	ftp://ftp.gnu.org/gnu/grub/grub-%%{tarversion}.tar.xz
+#Source0:	ftp://alpha.gnu.org/gnu/grub/grub-%{tarversion}.tar.xz
+Source0:	ftp://ftp.gnu.org/gnu/grub/grub-%%{tarversion}.tar.xz
 Source2:	grub.default
 Source3:	README.Mageia
 Source4:	README.efi

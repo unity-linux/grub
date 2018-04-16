@@ -20,7 +20,7 @@ script:
 - docker run --privileged=true -d -v "$(pwd):/rpmbuild" -v "/dev:/dev" -e MOCK_CONFIG="${MOCK_CONFIG}" $DID tail -f /dev/null
 - export CID=$(docker ps -l | awk '{print $1}' | grep -v -m1 'CONTAINER')
 - echo $CID
-- docker exec $CID /bin/sh -c 'cd /rpmbuild && rpmbuilder'
+- docker exec $CID /bin/sh -c 'cd /rpmbuild && rpmbuilder bs'
 - find ~/ -name *.src.rpm
 after_success:
 - sudo -H pip install --upgrade pyOpenSSL ndg-httpsclient pyasn1 requests[security] jinja2 marshmallow copr-cli simplejson
