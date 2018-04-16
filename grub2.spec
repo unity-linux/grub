@@ -28,7 +28,7 @@
 %define git	0
 Name:		grub2
 Version:	2.02.%{git}
-Release:	%mkrel 4
+Release:	%mkrel 5
 Summary:	Bootloader with support for Linux, Multiboot and more
 Group:		System/Boot and Init
 License:	GPLv3+ and GPLv2
@@ -77,6 +77,12 @@ Patch20003:	grub2-2.00-mga-dont_write_diskfilter_error_to_screen.patch
 Patch20004:	grub2-2.00-mga-dont_check_uuid_in_installer.patch
 Patch20005:	grub2-2.00-mga-remove-unrestricted_when_password_set.patch
 Patch20006:	grub2-2.02-mga-translate-theme-label.patch
+
+#
+# Unity Patches
+#
+Patch22001:     grub2-2.02-unity-mkrescue-use-grub2-dir.patch
+
 #
 # SuSE Patch:
 #
