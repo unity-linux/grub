@@ -1,5 +1,3 @@
-#Patch0000: grub-2.02-beta3-to-origin-master.patch
-Patch0000: grub-2.02-beta3-to-git10463.patch
 Patch0001: 0001-IBM-client-architecture-CAS-reboot-support.patch
 Patch0002: 0002-for-ppc-reset-console-display-attr-when-clear-screen.patch
 Patch0003: 0003-Disable-GRUB-video-support-for-IBM-power-machines.patch

@@ -17,14 +17,18 @@
 %global efi_arch i386-efi
 %endif
 
-%global tarversion 2.02~beta3
+%global tarversion 2.02
 %global pc_arch i386-pc
-%define git	10463
-%define rel	11
 
+# Use 'commits since release tag' from git describe as the version minor
+# so we can sanely implement snapshots without reconfiguring the spec.
+# Using './make_snapshot_patch' creates a patch with the %%{git} (minor) 
+# number in the name.
+# Add the patch name as Patch0000: in SOURCES/grub.patches
+%define git	0
 Name:		grub2
-Version:	2.02
-Release:	%mkrel -c git%{git} %{rel}
+Version:	2.02.%{git}
+Release:	%mkrel 4
 Summary:	Bootloader with support for Linux, Multiboot and more
 Group:		System/Boot and Init
 License:	GPLv3+ and GPLv2
@@ -47,6 +51,7 @@ Source13:	MageiaLogo-Regular-20.pf2
 Source14:	grub2-mageia-default.png
 Source15:	MageiaLogoFonts-bdf.tar.gz
 Source20:	theme.txt
+Source21:	make_snapshot_patch
 
 #
 # Fedora patches:
@@ -61,7 +66,7 @@ Source20:	theme.txt
 Patch10001:	10001-Put-the-correct-.file-directives-in-our-.S-files.patch
 Patch10002:	10002-Make-it-possible-to-enabled-build-id-sha1.patch
 Patch10004:	10004-Add-grub_qdprintf-grub_dprintf-without-the-file-lin.patch
-Patch10005:	10005-Make-a-gdb-dprintf-that-tells-us-load-addresses.patch
+###Patch10005:	10005-Make-a-gdb-dprintf-that-tells-us-load-addresses.patch
 
 #
 # Mga patches:
@@ -71,6 +76,7 @@ Patch20002:	grub2-2.00-mga-dont_write_sparse_file_error_to_screen.patch
 Patch20003:	grub2-2.00-mga-dont_write_diskfilter_error_to_screen.patch
 Patch20004:	grub2-2.00-mga-dont_check_uuid_in_installer.patch
 Patch20005:	grub2-2.00-mga-remove-unrestricted_when_password_set.patch
+Patch20006:	grub2-2.02-mga-translate-theme-label.patch
 #
 # SuSE Patch:
 #
@@ -93,7 +99,7 @@ BuildRequires:	freetype-devel
 BuildRequires:	pkgconfig(fuse) 
 BuildRequires:	gettext-devel
 BuildRequires:	git
-BuildRequires:	glibc-static-devel
+BuildRequires:	glibc-devel
 BuildRequires:	help2man
 BuildRequires:	liblzo-devel
 BuildRequires:	libusb-devel
@@ -130,17 +136,14 @@ This is the second version of the GRUB (Grand Unified Boot-loader), a highly
 configurable and customizable boot-loader with modular architecture.
 It supports a wide range of kernel formats, file systems, computer
 architectures and hardware devices.
-************************** WARNING ************************
-Do not attempt to install this package on a system which is not
-already using UEFI mode to boot. You cannot switch to UEFI mode by installing
-this package, the system must be installed in UEFI mode to use it, when it
-will be installed by default.
+Refer to the README.Mageia file that is part of this package's documentation
+for more information.
 %endif
 
 %ifarch %arm
 %package uboot
 Summary:	Boot-loader with support for  UBOOT
-Group:	System/Boot and Init
+Group:		System/Boot and Init
 
 Provides:	bootloader
 Provides:	grub2bootloader = %{version}-%{release}
@@ -161,6 +164,7 @@ Conflicts:	%{name}-efi < 2.02-0.git9752.19.mga5
 Recommends:	os-prober >= 1.53
 Recommends:	xorriso
 Requires:	grub2bootloader = %{version}-%{release}
+Requires:	console-setup
 
 %description common
 Common files used by both grub2 and grub2-efi.
@@ -249,7 +253,7 @@ pushd grub-%{tarversion}
 	  --program-transform-name=s,grub,%{name},	\
 	  --with-bootdir=/boot				\
 	  --with-grubdir=/%{name}			\
-	  CFLAGS=""
+	  CFLAGS="-g"
 %make_build
 popd
 
@@ -266,7 +270,7 @@ pushd grub-efi-%{tarversion}
 	  --program-transform-name=s,grub,%{name},	\
 	  --with-bootdir=/boot				\
 	  --with-grubdir=/%{name}			\
-	  CFLAGS=""
+	  CFLAGS="-g"
 %make_build
 popd
 %endif
@@ -302,8 +306,9 @@ install -d %{buildroot}/boot/%{name}/fonts
 
 # Workaround for RHL Bug 817187
 install -d %{buildroot}%{_datadir}/locale/en/LC_MESSAGES
-ln -s %{_datadir}/locale/en@quot/LC_MESSAGES/grub.mo %{buildroot}%{_datadir}/locale/en/LC_MESSAGES/grub.mo
-
+cp -f %{buildroot}%{_datadir}/locale/en@quot/LC_MESSAGES/grub.mo \
+      %{buildroot}%{_datadir}/locale/en/LC_MESSAGES/grub.mo
+      
 cat > %{buildroot}/boot/%{name}/custom.cfg <<EOF
 # Set non-graphical text/background colours
 set menu_color_normal=cyan/blue
@@ -333,6 +338,25 @@ cp %{SOURCE9} %{buildroot}%{_datadir}/grub/
 
 popd
 
+# Don't run debuginfo on all the grub modules and whatnot; it just
+# rejects them, complains, and slows down extraction.
+%global finddebugroot "%{_builddir}/%{?buildsubdir}/debug"
+
+%global dip RPM_BUILD_ROOT=%{finddebugroot} %{__debug_install_post}
+%define __debug_install_post (						\
+	mkdir -p %{finddebugroot}/usr					\
+	mv ${RPM_BUILD_ROOT}/usr/bin %{finddebugroot}/usr/bin		\
+	mv ${RPM_BUILD_ROOT}/usr/sbin %{finddebugroot}/usr/sbin		\
+	%{dip}								\
+	install -m 0755 -d %{buildroot}/usr/lib/ %{buildroot}/usr/src/	\
+	cp -al %{finddebugroot}/usr/lib/debug/				\\\
+		%{buildroot}/usr/lib/debug/				\
+	cp -al %{finddebugroot}/usr/src/debug/				\\\
+		%{buildroot}/usr/src/debug/ )				\
+	mv %{finddebugroot}/usr/bin %{buildroot}/usr/bin		\
+	mv %{finddebugroot}/usr/sbin %{buildroot}/usr/sbin		\
+	%{nil}
+ 
 %post
 if [ $1 -eq 2 ]; then
       touch /boot/grub2/updtrans
@@ -460,8 +484,7 @@ fi
 %config(noreplace) %{_sysconfdir}/grub.d/40_custom
 %config(noreplace) %{_sysconfdir}/grub.d/41_custom
 %config(noreplace) %{_sysconfdir}/default/grub
-%{_datadir}/grub
-%{_datadir}/grub/unicode.pf2
+%{_datadir}/grub/*
 %config(noreplace) /boot/%{name}/custom.cfg
 %{_mandir}/man1/%{name}-*.1*
 %{_mandir}/man8/%{name}-*.8*

@@ -1,0 +1,28 @@
+#!/bin/bash
+# make_snapshot_patch
+# Use:
+# $ make_snapshot_patch
+
+from=grub-2.02
+to=a827807
+
+rm -rf grub
+if [ -e grub ]; then
+cd grub
+git pull
+else
+git clone git://git.savannah.gnu.org/grub.git
+cd grub
+fi
+
+if [[ ${#to} > 0 ]]; then
+ git checkout $to
+fi 
+
+desc=$(git describe)
+commit=$(echo $desc | cut -d- -f3)
+[[ $commit = "" ]] && commit="0"
+
+git diff $from $to > ../$from-to-$desc.patch
+
+cd .. 

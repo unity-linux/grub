@@ -1,6 +1,6 @@
  
 Installing:
-  When installing Mageia 5 in UEFI mode, grub2 is the 
+  When installing Mageia 6 in UEFI mode, grub2 is the 
   default bootloader and will be installed and set up automatically. 
   If you have a dual mode 'BIOS', make sure you boot in UEFI mode and if
   using a USB stick for the install media, prepare the stick using isodumper,

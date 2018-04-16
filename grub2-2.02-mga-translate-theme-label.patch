@@ -1,0 +1,62 @@
+--- a/grub-core/gfxmenu/gui_label.c	2015-05-21 16:50:29.000000000 +0100
++++ b/grub-core/gfxmenu/gui_label.c	2017-12-06 21:47:53.139473526 +0000
+@@ -84,6 +84,7 @@
+ label_paint (void *vself, const grub_video_rect_t *region)
+ {
+   grub_gui_label_t self = vself;
++  char * translated_text = _(self->text);
+ 
+   if (! self->visible)
+     return;
+@@ -97,10 +98,10 @@
+     left_x = 0;
+   else if (self->align == align_center)
+     left_x = (self->bounds.width
+-	      - grub_font_get_string_width (self->font, self->text)) / 2;
++	      - grub_font_get_string_width (self->font, translated_text)) / 2;
+   else if (self->align == align_right)
+     left_x = (self->bounds.width
+-              - grub_font_get_string_width (self->font, self->text));
++              - grub_font_get_string_width (self->font, translated_text));
+   else
+     return;   /* Invalid alignment.  */
+ 
+@@ -109,7 +110,7 @@
+ 
+   grub_video_rect_t vpsave;
+   grub_gui_set_viewport (&self->bounds, &vpsave);
+-  grub_font_draw_string (self->text,
++  grub_font_draw_string (translated_text,
+                          self->font,
+                          grub_video_map_rgba_color (self->color),
+                          left_x,
+@@ -149,7 +150,7 @@
+ label_get_minimal_size (void *vself, unsigned *width, unsigned *height)
+ {
+   grub_gui_label_t self = vself;
+-  *width = grub_font_get_string_width (self->font, self->text);
++  *width = grub_font_get_string_width (self->font, _(self->text));
+   *height = (grub_font_get_ascent (self->font)
+              + grub_font_get_descent (self->font));
+ }
+@@ -183,15 +184,15 @@
+       else
+ 	{
+ 	   if (grub_strcmp (value, "@KEYMAP_LONG@") == 0)
+-	    value = _("Press enter to boot the selected OS, "
++	    value = "Press enter to boot the selected OS, "
+ 	       "`e' to edit the commands before booting "
+-	       "or `c' for a command-line. ESC to return previous menu.");
++	       "or `c' for a command-line. ESC to return previous menu.";
+            else if (grub_strcmp (value, "@KEYMAP_MIDDLE@") == 0)
+-	    value = _("Press enter to boot the selected OS, "
++	    value = "Press enter to boot the selected OS, "
+ 	       "`e' to edit the commands before booting "
+-	       "or `c' for a command-line.");
++	       "or `c' for a command-line.";
+ 	   else if (grub_strcmp (value, "@KEYMAP_SHORT@") == 0)
+-	    value = _("enter: boot, `e': options, `c': cmd-line");
++	    value = "enter: boot, `e': options, `c': cmd-line";
+ 	   /* FIXME: Add more templates here if needed.  */
+ 	  self->template = grub_strdup (value);
+ 	  self->text = grub_xasprintf (value, self->value);
