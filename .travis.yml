@@ -12,8 +12,8 @@ before_install:
 - mv /tmp/stuff/.host ~/.ssh/config
 - docker pull jmiahman/mageia-rpmbuilder
 env:
-- MOCK_CONFIG="mageia-6-i586"
-- MOCK_CONFIG="mageia-6-x86_64"
+- MOCK_CONFIG="mageia-cauldron-i586"
+- MOCK_CONFIG="mageia-cauldron-x86_64"
 script:
 - export DID=$(docker image ls | grep -m1 mageia-rpmbuilder | awk '{print $3}')
 - echo $DID
@@ -24,4 +24,5 @@ script:
 - find ~/ -name *.src.rpm
 after_success:
 - sudo -H pip install --upgrade pyOpenSSL ndg-httpsclient pyasn1 requests[security] jinja2 marshmallow copr-cli simplejson
-- if [ $MOCK_CONFIG == "mageia-6-x86_64" ]; then copr-cli --config /tmp/stuff/.copr build -r Mageia-6-x86_64 jmiahman/Unity-Linux $(find ~/ -name *.src.rpm | tr " " "\n"| grep -m1 '\.rpm'); fi
+- if [ $MOCK_CONFIG == "mageia-cauldron-x86_64" ]; then copr-cli --config /tmp/stuff/.copr build jmiahman/Unity-Linux $(find ~/ -name *.src.rpm | tr " " "\n"| grep -m1 '\.rpm'); fi
+- ssh -o StrictHostKeyChecking=no foobar2 'sh ~/bin/down_copr'
