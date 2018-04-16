@@ -25,4 +25,4 @@ script:
 after_success:
 - sudo -H pip install --upgrade pyOpenSSL ndg-httpsclient pyasn1 requests[security] jinja2 marshmallow copr-cli simplejson
 - if [ $MOCK_CONFIG == "mageia-cauldron-x86_64" ]; then copr-cli --config /tmp/stuff/.copr build jmiahman/Unity-Linux $(find ~/ -name *.src.rpm | tr " " "\n"| grep -m1 '\.rpm'); fi
-- ssh -o StrictHostKeyChecking=no foobar2 'sh ~/bin/down_copr'
+- if [ $MOCK_CONFIG == "mageia-cauldron-x86_64" ]; then ssh -o StrictHostKeyChecking=no foobar2 'sh ~/bin/down_copr';fi
