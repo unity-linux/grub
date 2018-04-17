@@ -28,7 +28,7 @@
 %define git	0
 Name:		grub2
 Version:	2.02.%{git}
-Release:	%mkrel 5
+Release:	%mkrel 6
 Summary:	Bootloader with support for Linux, Multiboot and more
 Group:		System/Boot and Init
 License:	GPLv3+ and GPLv2
@@ -81,7 +81,7 @@ Patch20006:	grub2-2.02-mga-translate-theme-label.patch
 #
 # Unity Patches
 #
-Patch22001:     grub2-2.02-unity-mkrescue-use-grub2-dir.patch
+#Patch22001:     grub2-2.02-unity-mkrescue-use-grub2-dir.patch
 
 #
 # SuSE Patch:
