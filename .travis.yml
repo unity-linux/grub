@@ -10,7 +10,7 @@ before_install:
 - chmod 600 /tmp/stuff/.deploy
 - ssh-add /tmp/stuff/.deploy
 - mv /tmp/stuff/.host ~/.ssh/config
-- docker pull jmiahman/mageia-rpmbuilder
+- docker pull jmiahman/mageia-rpmbuilder-x86_64
 env:
 - MOCK_CONFIG="mageia-cauldron-i586"
 - MOCK_CONFIG="mageia-cauldron-x86_64"
