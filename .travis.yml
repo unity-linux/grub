@@ -20,6 +20,7 @@ script:
 - docker run --privileged=true -d -v "$(pwd):/rpmbuild" -v "/dev:/dev" -e MOCK_CONFIG="${MOCK_CONFIG}" $DID tail -f /dev/null
 - export CID=$(docker ps -l | awk '{print $1}' | grep -v -m1 'CONTAINER')
 - echo $CID
+- docker exec $CID /bin/sh -c 'rpm --import /etc/pki/rpm-gpg/* &>> /rpmbuild/iso_build.log'
 - docker exec $CID /bin/sh -c 'sed -i "s%gpgcheck=1%gpgcheck=0%g" /etc/yum.repos.d/*.repo &>> /rpmbuild/iso_build.log'
 - docker exec $CID /bin/sh -c 'cd /rpmbuild && sh ./mkfonts && rpmbuilder bs'
 - find ~/ -name *.src.rpm
