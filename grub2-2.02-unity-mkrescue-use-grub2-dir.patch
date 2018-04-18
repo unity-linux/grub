@@ -1,6 +1,14 @@
---- a/util/grub-mkrescue.c	2018-04-17 23:49:24.443474449 -0700
-+++ a/util/grub-mkrescue.c_new	2018-04-18 02:01:37.241885602 -0700
-@@ -268,7 +268,7 @@
+--- util/grub-mkrescue.c	2018-04-17 23:49:24.443474449 -0700
++++ util/grub-mkrescue.c_new	2018-04-18 08:06:42.376780974 -0700
+@@ -261,14 +261,14 @@
+ 
+   load_cfg_f = grub_util_fopen (load_cfg, "wb");
+   fprintf (load_cfg_f, "search --fs-uuid --set=root %s\n", iso_uuid);
+-  fprintf (load_cfg_f, "set prefix=(${root})/boot/grub\n");
++  fprintf (load_cfg_f, "set prefix=(${root})/boot/grub2\n");
+ 
+   write_part (load_cfg_f, source_dirs[plat]);
+   fclose (load_cfg_f);
  
    grub_install_push_module ("search");
    grub_install_push_module ("iso9660");
@@ -42,6 +50,15 @@
        xorriso_push ("-no-emul-boot");
        xorriso_push ("-boot-load-size");
        xorriso_push ("4");
+@@ -635,7 +635,7 @@
+ 	      fwrite (buf, 1, 512, sa);
+ 	      
+ 	      grub_install_make_image_wrap_file (source_dirs[GRUB_INSTALL_PLATFORM_I386_PC],
+-						 "/boot/grub", sa, sysarea_img,
++						 "/boot/grub2", sa, sysarea_img,
+ 						 0, load_cfg,
+ 						 "i386-pc", 0);
+ 	      sz = ftello (sa);
 @@ -831,8 +831,8 @@
        grub_install_copy_file (grub_chrp, bootx, 1);
        grub_install_mkdir_p (ppc_chrp);

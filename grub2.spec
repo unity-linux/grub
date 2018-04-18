@@ -28,7 +28,7 @@
 %define git	0
 Name:		grub2
 Version:	2.02.%{git}
-Release:	%mkrel 6
+Release:	6%{?dist}
 Summary:	Bootloader with support for Linux, Multiboot and more
 Group:		System/Boot and Init
 License:	GPLv3+ and GPLv2
