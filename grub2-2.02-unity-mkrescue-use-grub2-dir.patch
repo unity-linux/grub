@@ -1,5 +1,5 @@
---- util/grub-mkrescue.c	2018-04-17 23:49:24.443474449 -0700
-+++ util/grub-mkrescue.c_new	2018-04-18 08:06:42.376780974 -0700
+--- a/util/grub-mkrescue.c	2018-04-17 23:49:24.443474449 -0700
++++ a/util/grub-mkrescue.c_new	2018-04-18 08:06:42.376780974 -0700
 @@ -261,14 +261,14 @@
  
    load_cfg_f = grub_util_fopen (load_cfg, "wb");
