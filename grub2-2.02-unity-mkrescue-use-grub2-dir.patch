@@ -1,5 +1,23 @@
---- util/grub-mkrescue.c	2018-04-17 23:49:24.443474449 -0700
-+++ util/grub-mkrescue.c_new	2018-04-18 00:01:00.972896685 -0700
+--- a/util/grub-mkrescue.c	2018-04-17 23:49:24.443474449 -0700
++++ a/util/grub-mkrescue.c_new	2018-04-18 02:01:37.241885602 -0700
+@@ -268,7 +268,7 @@
+ 
+   grub_install_push_module ("search");
+   grub_install_push_module ("iso9660");
+-  grub_install_make_image_wrap (source_dirs[plat], "/boot/grub", output,
++  grub_install_make_image_wrap (source_dirs[plat], "/boot/grub2", output,
+ 				0, load_cfg,
+ 				mkimage_target, 0);
+   grub_install_pop_module ();
+@@ -307,7 +307,7 @@
+   fclose (load_cfg_f);
+ 
+   grub_install_push_module ("iso9660");
+-  grub_install_make_image_wrap (source_dirs[plat], "()/boot/grub", output,
++  grub_install_make_image_wrap (source_dirs[plat], "()/boot/grub2", output,
+ 				0, load_cfg, mkimage_target, 0);
+   grub_install_pop_module ();
+   grub_util_unlink (load_cfg);
 @@ -497,7 +497,7 @@
    
    iso9660_dir = grub_util_make_temporary_dir ();
@@ -9,7 +27,13 @@
    grub_install_mkdir_p (boot_grub);
    romdir = grub_util_path_concat (2, boot_grub, "roms");
    grub_util_mkdir (romdir);
-@@ -596,7 +596,7 @@
+@@ -591,12 +591,12 @@
+       grub_install_push_module ("biosdisk");
+       grub_install_push_module ("iso9660");
+       grub_install_make_image_wrap (source_dirs[GRUB_INSTALL_PLATFORM_I386_PC],
+-				    "/boot/grub", output,
++				    "/boot/grub2", output,
+ 				    0, load_cfg,
  				    "i386-pc-eltorito", 0);
  
        xorriso_push ("-b");
