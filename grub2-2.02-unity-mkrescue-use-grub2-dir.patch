@@ -1,5 +1,27 @@
---- a/util/grub-mkrescue.c	2018-04-17 23:49:24.443474449 -0700
-+++ a/util/grub-mkrescue.c_new	2018-04-18 08:06:42.376780974 -0700
+diff -Naur grub/util/grub-install.c grub_new/util/grub-install.c
+--- grub/util/grub-install.c	2018-04-18 16:54:49.311544732 -0700
++++ grub_new/util/grub-install.c	2018-04-18 16:51:27.856350416 -0700
+@@ -1611,7 +1611,7 @@
+     case GRUB_INSTALL_PLATFORM_I386_IEEE1275:
+     case GRUB_INSTALL_PLATFORM_POWERPC_IEEE1275:
+       {
+-	char *dst = grub_util_path_concat (2, grubdir, "grub");
++	char *dst = grub_util_path_concat (2, grubdir, "grub2");
+ 	grub_install_copy_file (imgfile, dst, 1);
+ 	free (dst);
+       }
+@@ -1806,7 +1806,7 @@
+ 	}
+       break;
+     case GRUB_INSTALL_PLATFORM_MIPS_ARC:
+-      grub_install_sgi_setup (install_device, imgfile, "grub");
++      grub_install_sgi_setup (install_device, imgfile, "grub2");
+       break;
+ 
+     case GRUB_INSTALL_PLATFORM_I386_EFI:
+diff -Naur grub/util/grub-mkrescue.c grub_new/util/grub-mkrescue.c
+--- grub/util/grub-mkrescue.c	2018-04-18 16:54:49.312544708 -0700
++++ grub_new/util/grub-mkrescue.c	2018-04-18 16:43:33.981654629 -0700
 @@ -261,14 +261,14 @@
  
    load_cfg_f = grub_util_fopen (load_cfg, "wb");
@@ -103,3 +125,33 @@
      }
  
    make_image_fwdisk (GRUB_INSTALL_PLATFORM_MIPSEL_ARC, "mipsel-arc", "arc.exe");
+diff -Naur grub/util/grub-mkstandalone.c grub_new/util/grub-mkstandalone.c
+--- grub/util/grub-mkstandalone.c	2018-04-18 16:54:49.312544708 -0700
++++ grub_new/util/grub-mkstandalone.c	2018-04-18 16:52:19.223125069 -0700
+@@ -112,7 +112,7 @@
+ 
+ struct argp argp = {
+   options, argp_parser, N_("[OPTION] SOURCE..."),
+-  N_("Generate a standalone image (containing all modules) in the selected format")"\v"N_("Graft point syntax (E.g. /boot/grub/grub.cfg=./grub.cfg) is accepted"), 
++  N_("Generate a standalone image (containing all modules) in the selected format")"\v"N_("Graft point syntax (E.g. /boot/grub2/grub.cfg=./grub.cfg) is accepted"), 
+   NULL, help_filter, NULL
+ };
+ 
+@@ -314,7 +314,7 @@
+   enum grub_install_plat plat = grub_install_get_target (grub_install_source_directory);
+ 
+   char *memdisk_dir = grub_util_make_temporary_dir ();
+-  char *boot_grub = grub_util_path_concat (3, memdisk_dir, "boot", "grub");
++  char *boot_grub = grub_util_path_concat (3, memdisk_dir, "boot", "grub2");
+   grub_install_copy_files (grub_install_source_directory,
+ 			   boot_grub, plat);
+ 
+@@ -352,7 +352,7 @@
+   grub_install_push_module ("tar");
+ 
+   grub_install_make_image_wrap (grub_install_source_directory,
+-				"(memdisk)/boot/grub", output_image,
++				"(memdisk)/boot/grub2", output_image,
+ 				memdisk_img, NULL,
+ 				grub_util_get_target_name (format), 0);
+ 
