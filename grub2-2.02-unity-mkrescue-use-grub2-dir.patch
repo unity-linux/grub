@@ -1,38 +1,15 @@
---- ./util/grub-mkrescue.c	2017-04-24 02:15:50.000000000 -0700
-+++ ./util/grub-mkrescue.c_grub2	2018-04-16 11:52:37.581258409 -0700
-@@ -261,14 +261,14 @@
- 
-   load_cfg_f = grub_util_fopen (load_cfg, "wb");
-   fprintf (load_cfg_f, "search --fs-uuid --set=root %s\n", iso_uuid);
--  fprintf (load_cfg_f, "set prefix=(${root})/boot/grub\n");
-+  fprintf (load_cfg_f, "set prefix=(${root})/boot/grub2\n");
- 
-   write_part (load_cfg_f, source_dirs[plat]);
-   fclose (load_cfg_f);
- 
-   grub_install_push_module ("search");
-   grub_install_push_module ("iso9660");
--  grub_install_make_image_wrap (source_dirs[plat], "/boot/grub", output,
-+  grub_install_make_image_wrap (source_dirs[plat], "/boot/grub2", output,
- 				0, load_cfg,
- 				mkimage_target, 0);
-   grub_install_pop_module ();
-@@ -307,7 +307,7 @@
-   fclose (load_cfg_f);
- 
-   grub_install_push_module ("iso9660");
--  grub_install_make_image_wrap (source_dirs[plat], "()/boot/grub", output,
-+  grub_install_make_image_wrap (source_dirs[plat], "()/boot/grub2", output,
- 				0, load_cfg, mkimage_target, 0);
-   grub_install_pop_module ();
-   grub_util_unlink (load_cfg);
-@@ -583,12 +583,12 @@
-       grub_install_push_module ("biosdisk");
-       grub_install_push_module ("iso9660");
-       grub_install_make_image_wrap (source_dirs[GRUB_INSTALL_PLATFORM_I386_PC],
--				    "/boot/grub", output,
-+				    "/boot/grub2", output,
- 				    0, load_cfg,
+--- util/grub-mkrescue.c	2018-04-17 23:49:24.443474449 -0700
++++ util/grub-mkrescue.c_new	2018-04-18 00:01:00.972896685 -0700
+@@ -497,7 +497,7 @@
+   
+   iso9660_dir = grub_util_make_temporary_dir ();
+   grub_util_info ("temporary iso9660 dir is `%s'", iso9660_dir);
+-  boot_grub = grub_util_path_concat (3, iso9660_dir, "boot", "grub");
++  boot_grub = grub_util_path_concat (3, iso9660_dir, "boot", "grub2");
+   grub_install_mkdir_p (boot_grub);
+   romdir = grub_util_path_concat (2, boot_grub, "roms");
+   grub_util_mkdir (romdir);
+@@ -596,7 +596,7 @@
  				    "i386-pc-eltorito", 0);
  
        xorriso_push ("-b");
@@ -41,16 +18,7 @@
        xorriso_push ("-no-emul-boot");
        xorriso_push ("-boot-load-size");
        xorriso_push ("4");
-@@ -627,7 +627,7 @@
- 	      fwrite (buf, 1, 512, sa);
- 	      
- 	      grub_install_make_image_wrap_file (source_dirs[GRUB_INSTALL_PLATFORM_I386_PC],
--						 "/boot/grub", sa, sysarea_img,
-+						 "/boot/grub2", sa, sysarea_img,
- 						 0, load_cfg,
- 						 "i386-pc", 0);
- 	      sz = ftello (sa);
-@@ -824,8 +824,8 @@
+@@ -831,8 +831,8 @@
        grub_install_copy_file (grub_chrp, bootx, 1);
        grub_install_mkdir_p (ppc_chrp);
        grub_install_copy_file (bisrc, bitgt, 1);
@@ -61,7 +29,7 @@
        /* FIXME: add PreP */
        if (system_area == SYS_AREA_COMMON)
  	{
-@@ -874,25 +874,25 @@
+@@ -881,25 +881,25 @@
        xorriso_push ("-B");
        xorriso_push (",");
        xorriso_push ("--grub2-sparc-core");
