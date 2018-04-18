@@ -81,7 +81,7 @@ Patch20006:	grub2-2.02-mga-translate-theme-label.patch
 #
 # Unity Patches
 #
-#Patch22001:     grub2-2.02-unity-mkrescue-use-grub2-dir.patch
+Patch22001:     grub2-2.02-unity-mkrescue-use-grub2-dir.patch
 
 #
 # SuSE Patch:
